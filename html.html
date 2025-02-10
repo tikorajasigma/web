@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bird</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #70c5ce;
+        }
+        #game {
+            position: relative;
+            width: 400px;
+            height: 600px;
+            background-color: #70c5ce;
+            border: 2px solid #000;
+            overflow: hidden;
+        }
+        #bird {
+            position: absolute;
+            top: 50%;
+            left: 50px;
+            width: 40px;
+            height: 40px;
+            background-color: yellow;
+            border-radius: 50%;
+        }
+        .pipe {
+            position: absolute;
+            width: 60px;
+            background-color: green;
+        }
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="game">
+        <div id="bird"></div>
+        <div id="score">0</div>
+    </div>
+
+    <script>
+        const game = document.getElementById('game');
+        const bird = document.getElementById('bird');
+        const scoreElement = document.getElementById('score');
+
+        let birdY = 250;
+        let birdVelocity = 0;
+        let gravity = 0.5;
+        let jumpStrength = -8; // Kekuatan lompatan (nilai negatif untuk naik)
+        let score = 0;
+        let pipes = [];
+        let isGameOver = false;
+
+        function updateBird() {
+            if (isGameOver) return;
+
+            birdVelocity += gravity; // Terapkan gravitasi
+            birdY += birdVelocity; // Update posisi burung
+            bird.style.top = birdY + 'px';
+
+            // Cek jika burung jatuh ke tanah atau menabrak langit-langit
+            if (birdY > game.clientHeight - 40 || birdY < 0) {
+                gameOver();
+            }
+        }
+
+        function createPipe() {
+            if (isGameOver) return;
+
+            const pipeGap = 150;
+            const pipeWidth = 60;
+            const pipeHeight = Math.random() * (game.clientHeight - pipeGap - 100) + 50;
+
+            const topPipe = document.createElement('div');
+            topPipe.className = 'pipe';
+            topPipe.style.top = '0';
+            topPipe.style.left = game.clientWidth + 'px';
+            topPipe.style.height = pipeHeight + 'px';
+
+            const bottomPipe = document.createElement('div');
+            bottomPipe.className = 'pipe';
+            bottomPipe.style.top = pipeHeight + pipeGap + 'px';
+            bottomPipe.style.left = game.clientWidth + 'px';
+            bottomPipe.style.height = game.clientHeight - pipeHeight - pipeGap + 'px';
+
+            game.appendChild(topPipe);
+            game.appendChild(bottomPipe);
+
+            pipes.push({ top: topPipe, bottom: bottomPipe });
+        }
+
+        function updatePipes() {
+            if (isGameOver) return;
+
+            for (let i = pipes.length - 1; i >= 0; i--) {
+                const pipe = pipes[i];
+                const pipeLeft = parseFloat(pipe.top.style.left);
+
+                if (pipeLeft < -60) {
+                    game.removeChild(pipe.top);
+                    game.removeChild(pipe.bottom);
+                    pipes.splice(i, 1);
+                    score++;
+                    scoreElement.textContent = score;
+                } else {
+                    pipe.top.style.left = pipeLeft - 2 + 'px';
+                    pipe.bottom.style.left = pipeLeft - 2 + 'px';
+                }
+
+                // Cek tabrakan dengan pipa
+                if (pipeLeft < 50 && pipeLeft > 0) {
+                    if (birdY < parseFloat(pipe.top.style.height) || birdY > parseFloat(pipe.bottom.style.top)) {
+                        gameOver();
+                    }
+                }
+            }
+        }
+
+        function gameOver() {
+            if (isGameOver) return;
+            isGameOver = true;
+            alert('Game Over! Score: ' + score);
+            window.location.reload();
+        }
+
+        function gameLoop() {
+            updateBird();
+            updatePipes();
+            if (!isGameOver) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        // Event listener untuk tombol apa saja (space, klik, dll)
+        document.addEventListener('keydown', () => {
+            if (!isGameOver) {
+                birdVelocity = jumpStrength; // Beri impuls ke atas
+            }
+        });
+
+        setInterval(createPipe, 2000);
+        gameLoop();
+    </script>
+</body>
+</html>
